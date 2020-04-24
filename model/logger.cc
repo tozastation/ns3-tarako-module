@@ -11,23 +11,25 @@
 namespace ns3 {
 namespace tarako {
 
-void TarakoLogger::WriteLog(std::unordered_map<int, NodeInfo> node_map, std::string file_path)
+void TarakoLogger::WriteLog(std::unordered_map<int, NodeInfo> node_map, std::string log_path)
 {
     // --- Init Energy Consumption ---
     AsciiTraceHelper ascii;
     // Col(0): Node DeviceAddr, Col(1): EnergyConsumption(mA)
-    Ptr<OutputStreamWrapper> e_stream = ascii.CreateFileStream(file_path); 
+    std::stringstream energy_consumption_file;
+    energy_consumption_file << log_path << "energy_consumption.csv";
+    Ptr<OutputStreamWrapper> e_stream = ascii.CreateFileStream(energy_consumption_file.str()); 
     
+    std::stringstream node_packet_info_file;
+    node_packet_info_file << log_path << "node_packet_info.csv";
+    Ptr<OutputStreamWrapper> n_stream = ascii.CreateFileStream(node_packet_info_file.str()); // "Col(0): Node DeviceAddr, Col(1): EnergyConsumption(mA)
+
     for (auto itr = node_map.begin(); itr != node_map.end(); ++itr)
     {
         int nwk_addr = itr->first;
         NodeInfo node_info = itr->second;
         *e_stream->GetStream () << nwk_addr << "," << node_info.energy_consumption << std::endl;
         
-        std::stringstream node_packet_info_file;
-        node_packet_info_file << "./scratch/" << nwk_addr << "_node_packet_info.csv";
-        Ptr<OutputStreamWrapper> n_stream = ascii.CreateFileStream(node_packet_info_file.str()); // "Col(0): Node DeviceAddr, Col(1): EnergyConsumption(mA)
-
         for (auto& packet: node_info.recieved_packets)
         {
             lorawan::LorawanMacHeader mHdr;

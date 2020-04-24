@@ -28,7 +28,7 @@ GarbageBoxStatus TarakoUtil::GetGarbageBoxStatus(GarbageBoxSensor* gs, unsigned 
     } 
 }
 
-int TarakoUtil::CreaterRandomUnsignedInt(int begin, int end)
+int TarakoUtil::CreaterRandomInt(int begin, int end)
 {
     std::random_device rd;
 	std::mt19937 mt(rd());

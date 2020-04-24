@@ -16,7 +16,7 @@ class TarakoUtil
         unsigned int max_volume
         );
     
-    static int CreaterRandomUnsignedInt(int begin, int end);
+    static int CreaterRandomInt(int begin, int end);
 
     static double ConvertStringToDouble(std::string value);
 

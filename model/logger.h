@@ -12,7 +12,7 @@ class TarakoLogger
     public:
     void WriteLog(
         std::unordered_map<int, NodeInfo> node_map,
-        std::string file_path
+        std::string log_path
     );
 };
 

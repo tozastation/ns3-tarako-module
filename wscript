@@ -13,6 +13,7 @@ def build(bld):
         'model/logger.cc',
         'model/tracer.cc',
         'model/util.cc',
+        'model/group_node.cc',
         ]
 
     module_test = bld.create_ns3_module_test_library('tarako')
@@ -31,7 +32,8 @@ def build(bld):
         'model/logger.h',
         'model/node_payload.h',
         'model/tracer.h',
-        'model/util.h'
+        'model/util.h',
+        'model/group_node.h'
         ]
 
     if bld.env.ENABLE_EXAMPLES:
