@@ -4,7 +4,7 @@
 namespace ns3 {
 namespace tarako {
     TarakoNodeData::TarakoNodeData(){};
-    
+
     std::string TarakoNodeData::ToString()
     {
         std::stringstream ss;
@@ -19,7 +19,12 @@ namespace tarako {
         ss << "lorawan energy consumption: " << this->lora_energy_consumption << std::endl;
         ss << "ble energy consumption: " << this->ble_energy_consumption << std::endl;
         ss << "sent packets number: " << this->sent_packets.size() << std::endl;
-        ss << "received packets number: " << this->received_packets.size() << std::endl;
+        ss << "received packets number: " << std::endl;
+        for (auto& node_addr: this->group_node_addrs)
+        {
+            ss << "lora: " << std::get<0>(node_addr) << ", ";
+            ss << "ble: " << std::get<1>(node_addr) << std::endl;
+        }
         ss << "    -------------    " << std::endl;
         return ss.str();
     };

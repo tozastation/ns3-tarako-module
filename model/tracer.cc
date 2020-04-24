@@ -95,12 +95,33 @@ namespace tarako {
             random_value,
             tarako::TarakoConst::GARBAGE_BOX_VOLUME
             );
-        // std::cout << "[INFO] garbage box status: " << status << std::endl;
-        LoRaWANPayload payload = LoRaWANPayload{status};
-        Ptr<Packet> new_packet = Create<Packet>((uint8_t *)&payload, sizeof(payload));
-        node_data->lora_net_device->Send(new_packet);
-        node_data->sent_packets.push_back(new_packet);
-        // std::cout << node_data->ToString() << std::endl;
+        switch (node_data->current_status)
+        {
+            case tarako::TarakoNodeStatus::only_lorawan:
+            {
+                // std::cout << "[STATUS] only_lorawan" << std::endl;
+                LoRaWANPayload payload = LoRaWANPayload{status};
+                Ptr<Packet> new_packet = Create<Packet>((uint8_t *)&payload, sizeof(payload));
+                node_data->lora_net_device->Send(new_packet);
+                node_data->sent_packets.push_back(new_packet);
+                break;
+            }
+            case tarako::TarakoNodeStatus::group_leader:
+            {
+                // std::cout << "[STATUS] group_leader" << std::endl;
+                break;
+            }
+            case tarako::TarakoNodeStatus::group_member:
+            {
+                // std::cout << "[STATUS] group_member" << std::endl;
+                break;
+            }
+            default:
+            {
+                // std::cout << "[STATUS] error" << std::endl;
+                break;
+            }
+        }
         Simulator::Schedule(node_data->conn_interval, &OnActivateNodeForGroup, gs, node_data);
     }
 }

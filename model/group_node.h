@@ -14,9 +14,9 @@
 namespace ns3 {
 namespace tarako {
     enum TarakoNodeStatus {
-        group_leader,
-        group_member,
-        only_lorawan
+        group_leader = 1,
+        group_member = 2,
+        only_lorawan = 3
     };
 
     class TarakoNodeData
@@ -33,6 +33,7 @@ namespace tarako {
         double lora_energy_consumption;
         double ble_energy_consumption;
 
+        std::vector<std::tuple<int, std::string>> group_node_addrs;
         std::vector<Ptr<Packet>> sent_packets;
         std::vector<Ptr<Packet>> received_packets;
 
