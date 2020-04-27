@@ -2,6 +2,10 @@
 #include "ns3/lora-frame-header.h"
 #include "ns3/lorawan-mac-header.h"
 #include "ns3/packet.h"
+#include "ns3/ble-phy.h"
+#include "ns3/log.h"
+#include "ns3/ble-link-manager.h"
+#include "ns3/lr-wpan-mac.h"
 
 #include "payload.h"
 #include "util.h"
@@ -38,7 +42,7 @@ namespace tarako {
     void OnActivateNode (Ptr<lorawan::LoraNetDevice> device, GarbageBoxSensor* gs, NodeInfo* node, Time interval)
     {
         std::cout << "[INFO] target node: " << node->id << std::endl;
-        unsigned int random_value = tarako::TarakoUtil::CreaterRandomInt(
+        unsigned int random_value = tarako::TarakoUtil::CreateRandomInt(
             tarako::TarakoConst::RANDOM_VALUE_RANGE_BEGIN,
             tarako::TarakoConst::RANDOM_VALUE_RANGE_END
         );
@@ -72,7 +76,7 @@ namespace tarako {
         myPacket->RemoveHeader (mHdr);
         myPacket->RemoveHeader (fHdr);
         int nwk_addr = int(fHdr.GetAddress().GetNwkAddr());
-        node_data_map->at(nwk_addr).received_packets.push_back(packet->Copy());
+        node_data_map->at(nwk_addr).received_packets_by_lora.push_back(packet->Copy());
         // --- Print Payload from Recieved Packet ---
         uint8_t *buffer = new uint8_t[myPacket->GetSize()];
         myPacket->CopyData(buffer, myPacket->GetSize());
@@ -81,39 +85,54 @@ namespace tarako {
     }
 
     void OnActivateNodeForGroup (
-        tarako::GarbageBoxSensor* gs, 
         tarako::TarakoNodeData* node_data
     ){
         // std::cout << "[INFO] target node: " << node_data->id << std::endl;
-        unsigned int random_value = tarako::TarakoUtil::CreaterRandomInt(
+        unsigned int random_value = tarako::TarakoUtil::CreateRandomInt(
             tarako::TarakoConst::RANDOM_VALUE_RANGE_BEGIN,
             tarako::TarakoConst::RANDOM_VALUE_RANGE_END
         );
         // std::cout << "[INFO] add random value to garbage box: " << random_value << std::endl;
         GarbageBoxStatus status =  tarako::TarakoUtil::GetGarbageBoxStatus(
-            gs, 
+            &node_data->sensor, 
             random_value,
             tarako::TarakoConst::GARBAGE_BOX_VOLUME
-            );
+        );
         switch (node_data->current_status)
         {
             case tarako::TarakoNodeStatus::only_lorawan:
             {
-                // std::cout << "[STATUS] only_lorawan" << std::endl;
                 LoRaWANPayload payload = LoRaWANPayload{status};
                 Ptr<Packet> new_packet = Create<Packet>((uint8_t *)&payload, sizeof(payload));
                 node_data->lora_net_device->Send(new_packet);
-                node_data->sent_packets.push_back(new_packet);
+                node_data->sent_packets_by_lora.push_back(new_packet);
                 break;
             }
             case tarako::TarakoNodeStatus::group_leader:
             {
-                // std::cout << "[STATUS] group_leader" << std::endl;
+                if (node_data->leader_node_addr == node_data->ble_network_addr)
+                {
+                    // std::cout << "[INFO] I'm Leader (Receiver) : " << node_data->ble_network_addr << std::endl;
+                }
                 break;
             }
             case tarako::TarakoNodeStatus::group_member:
             {
-                // std::cout << "[STATUS] group_member" << std::endl;
+                // [INFO] Prepare Send Data to Group Leader
+                TarakoGroupMemberPayload payload = TarakoGroupMemberPayload{
+                    status,
+                    node_data->lora_energy_consumption,
+                    static_cast<int>(node_data->sent_packets_by_ble.size())
+                };
+                Ptr<Packet> new_packet = Create<Packet>((uint8_t *)&payload, sizeof(payload));
+                McpsDataRequestParams params;
+                params.m_dstPanId = 0;
+                params.m_srcAddrMode = SHORT_ADDR;
+                params.m_dstAddrMode = SHORT_ADDR;
+                params.m_dstAddr = Mac16Address (node_data->leader_node_addr.c_str());
+                // [INFO] Sent
+                node_data->lr_wpan_net_device->GetMac()->McpsDataRequest(params, new_packet);
+                node_data->sent_packets_by_ble.push_back(new_packet);
                 break;
             }
             default:
@@ -122,7 +141,7 @@ namespace tarako {
                 break;
             }
         }
-        Simulator::Schedule(node_data->conn_interval, &OnActivateNodeForGroup, gs, node_data);
+        Simulator::Schedule(node_data->conn_interval, &OnActivateNodeForGroup, node_data);
     }
 }
 }

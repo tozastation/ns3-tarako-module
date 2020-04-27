@@ -10,6 +10,8 @@
 #include "ns3/position-allocator.h"
 #include "ns3/ble-net-device.h"
 #include "ns3/lora-net-device.h"
+#include "garbage_station.h"
+#include <ns3/lr-wpan-net-device.h>
 
 namespace ns3 {
 namespace tarako {
@@ -22,27 +24,52 @@ namespace tarako {
     class TarakoNodeData
     {
         public:
+        // Basic Info
         int id;
-        int lora_network_addr;
-        std::string ble_network_addr;
         ns3::Vector3D position;
-        TarakoNodeStatus current_status;
+        ns3::Time activate_time;
         ns3::Time conn_interval;
-
         double total_energy_consumption;
-        double lora_energy_consumption;
-        double ble_energy_consumption;
-
+        // Group Info
+        TarakoNodeStatus current_status;
+        std::string leader_node_addr;
         std::vector<std::tuple<int, std::string>> group_node_addrs;
-        std::vector<Ptr<Packet>> sent_packets;
-        std::vector<Ptr<Packet>> received_packets;
-
+        bool EnableGrouping;
+        bool EnableEqualization; 
+        // LoRaWAN
+        int lora_network_addr;
+        double lora_energy_consumption;
+        std::vector<Ptr<Packet>> sent_packets_by_lora;
+        std::vector<Ptr<Packet>> received_packets_by_lora;
+        // BLE
+        std::string ble_network_addr;
+        double ble_energy_consumption;
+        std::vector<Ptr<Packet>> sent_packets_by_ble;
+        std::vector<Ptr<Packet>> received_packets_by_ble;
+        std::vector<std::tuple<std::string, Ptr<Packet>>> buffered_packets;
+        // Net Device Object
         Ptr<lorawan::LoraNetDevice> lora_net_device;
+        Ptr<ns3::LrWpanNetDevice> lr_wpan_net_device;
         Ptr<ns3::BleNetDevice> ble_net_device;
+        // Sensor
+        tarako::GarbageBoxSensor sensor;
         TarakoNodeData();
         std::string ToString();
     };
 
+    struct TarakoGroupLeaderPayload {
+        std::vector<std::tuple<std::string, GarbageBoxStatus>> node_infos;
+    };
+
+    struct TarakoGroupMemberPayload {
+        GarbageBoxStatus status;
+        double lora_energy_consumption;
+        int cnt_ble;
+    };
+
+    struct TarakoGroupDownlink {
+        std::string next_leader_id;
+    };
 }
 }
 #endif

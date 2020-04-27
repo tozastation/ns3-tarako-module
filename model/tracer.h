@@ -41,8 +41,7 @@ namespace tarako {
         Time interval
     );
 
-    void OnActivateNodeForGroup (
-        tarako::GarbageBoxSensor* gs, 
+    void OnActivateNodeForGroup ( 
         tarako::TarakoNodeData* node_data
     );
 

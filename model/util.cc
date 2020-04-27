@@ -1,13 +1,17 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 
-#include "util.h"
 #include <random>
+#include <vector>
+#include <string>
+#include <tuple>
+
 #include "csv.h"
 #include "const.h"
-#include <vector>
+#include "util.h"
 
 namespace ns3 {
 namespace tarako {
+
 
 GarbageBoxStatus TarakoUtil::GetGarbageBoxStatus(GarbageBoxSensor* gs, unsigned int add, unsigned int max_volume)
 {
@@ -28,7 +32,7 @@ GarbageBoxStatus TarakoUtil::GetGarbageBoxStatus(GarbageBoxSensor* gs, unsigned 
     } 
 }
 
-int TarakoUtil::CreaterRandomInt(int begin, int end)
+int TarakoUtil::CreateRandomInt(int begin, int end)
 {
     std::random_device rd;
 	std::mt19937 mt(rd());
@@ -71,5 +75,20 @@ std::vector<GarbageBox> TarakoUtil::GetGarbageBox(std::string csv_file)
     return g_boxes;
 }
 
+std::string TarakoUtil::GetNextGroupLeader(std::vector<std::tuple<std::string, double>> nodes)
+{
+    std::string next_group_leader = std::get<0>(nodes.at(0));
+    double lowest_energy_consumption = std::get<1>(nodes.at(0));
+    for (auto& node: nodes)
+    {
+        double e_v = std::get<1>(node);
+        if (lowest_energy_consumption > e_v)
+        {
+            lowest_energy_consumption = e_v;
+            next_group_leader = std::get<0>(node);
+        }
+    }
+    return next_group_leader;
+}
 }
 }

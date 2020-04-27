@@ -16,7 +16,7 @@ class TarakoUtil
         unsigned int max_volume
         );
     
-    static int CreaterRandomInt(int begin, int end);
+    static int CreateRandomInt(int begin, int end);
 
     static double ConvertStringToDouble(std::string value);
 
@@ -25,6 +25,8 @@ class TarakoUtil
     static std::vector<GarbageBox> GetGarbageBox(
         std::string csv_file
     );
+
+    static std::string GetNextGroupLeader(std::vector<std::tuple<std::string, double>> nodes);
 };
 
 }
