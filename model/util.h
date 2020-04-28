@@ -27,6 +27,8 @@ class TarakoUtil
     );
 
     static std::string GetNextGroupLeader(std::vector<std::tuple<std::string, double>> nodes);
+
+    static std::tuple<bool, int> IsMultipleNode(std::vector<std::vector<std::tuple<int, bool>>> g_boxes, int target_node_id);
 };
 
 }

@@ -15,6 +15,8 @@
 #include <unordered_map> 
 #include "random"
 
+NS_LOG_COMPONENT_DEFINE ("TarakoTracer");
+
 namespace ns3 {
 namespace tarako {
     void OnLoRaWANEnergyConsumptionChange (NodeInfo* node,  double oldEnergy, double newEnergy)
@@ -106,6 +108,11 @@ namespace tarako {
                 Ptr<Packet> new_packet = Create<Packet>((uint8_t *)&payload, sizeof(payload));
                 node_data->lora_net_device->Send(new_packet);
                 node_data->sent_packets_by_lora.push_back(new_packet);
+                NS_LOG_INFO("---  tarako::TarakoNodeStatus::only_lorawan ---");
+                NS_LOG_INFO("(i am)               : " << node_data->id);
+                NS_LOG_INFO("(garbage box status) : " << payload.c);
+                NS_LOG_INFO("(sent num)           : " << node_data->sent_packets_by_lora.size());
+                NS_LOG_INFO("-----------------------------------------------");
                 break;
             }
             case tarako::TarakoNodeStatus::group_leader:

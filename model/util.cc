@@ -90,5 +90,34 @@ std::string TarakoUtil::GetNextGroupLeader(std::vector<std::tuple<std::string, d
     }
     return next_group_leader;
 }
+
+std::tuple<bool, int> TarakoUtil::IsMultipleNode(std::vector<std::vector<std::tuple<int, bool>>> g_boxes, int target_node_id)
+{
+    const int SINGLE = 1;
+    bool is_multiple_node = false;
+    int target_index = 0;
+    for (auto& g_box: g_boxes)
+    {
+        for(auto& sensor: g_box)
+        {
+            int node_id = std::get<0>(sensor);
+            if (node_id == target_node_id)
+            {
+                if (g_box.size() <= SINGLE)
+                {
+                    break;
+                }
+                else 
+                {
+                    is_multiple_node = true;
+                    break;
+                }
+            }
+        }
+        if(is_multiple_node) break;
+        target_index++;
+    }
+    return {is_multiple_node, target_index};
+}
 }
 }
