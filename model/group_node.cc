@@ -16,9 +16,9 @@ namespace tarako {
         ss << "current status                   : " << this->current_status << std::endl;
         ss << "activate time                    : " << this->activate_time.GetSeconds() << "s" << std::endl;
         ss << "connection interval              : " << this->conn_interval.GetSeconds() << "s" << std::endl;
-        ss << "total energy consumption         : " << this->total_energy_consumption << std::endl;
-        ss << "lorawan energy consumption       : " << this->lora_energy_consumption << "mA" << std::endl;
-        ss << "ble energy consumption           : " << this->ble_energy_consumption << std::endl;
+        ss << "total energy consumption         : " << this->total_energy_consumption << "A" << std::endl;
+        ss << "lorawan energy consumption       : " << this->lora_energy_consumption << "A" << std::endl;
+        ss << "ble energy consumption           : " << this->ble_energy_consumption << "A" << std::endl;
         ss << "sent packets by lora number      : " << this->sent_packets_by_lora.size() << std::endl;
         ss << "received packets by lora number  : " << this->received_packets_by_lora.size() << std::endl;
         ss << "sent packets by ble number       : " << this->sent_packets_by_ble.size() << std::endl;

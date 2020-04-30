@@ -8,6 +8,10 @@
 #include "csv.h"
 #include "const.h"
 #include "util.h"
+#include <chrono>
+#include <sstream>
+#include <iomanip>
+#include <iostream>
 
 namespace ns3 {
 namespace tarako {
@@ -47,8 +51,11 @@ double TarakoUtil::ConvertStringToDouble(std::string value)
 
 bool TarakoUtil::IsSupportedGarbageBoxType(std::string value)
 {
-    if (value == "○") return true;
-    else return false;
+    if (value.empty())
+    {
+        return false;
+    } 
+    else return true;
 }
 
 std::vector<GarbageBox> TarakoUtil::GetGarbageBox(std::string csv_file)
@@ -61,6 +68,7 @@ std::vector<GarbageBox> TarakoUtil::GetGarbageBox(std::string csv_file)
     }
     for (unsigned int row = 1; row < data.size(); row++) {
         std::vector<std::string> rec = data[row];
+        //std::cout << rec[3] << "," << rec[4] << "," << rec[5] << std::endl;
         GarbageBox g_box;
 
         g_box.id = rec[TarakoConst::ID];
@@ -119,5 +127,15 @@ std::tuple<bool, int> TarakoUtil::IsMultipleNode(std::vector<std::vector<std::tu
     }
     return {is_multiple_node, target_index};
 }
+
+std::string TarakoUtil::GetCurrentTimeStamp()
+{
+    auto now = std::chrono::system_clock::now();
+    auto now_c = std::chrono::system_clock::to_time_t(now);
+    std::stringstream ss;
+    ss << std::put_time(localtime(&now_c), "%Y%m%d_%H%M%S");
+    return ss.str();
+}
+
 }
 }
