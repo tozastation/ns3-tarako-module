@@ -26,9 +26,20 @@ class TarakoUtil
         std::string csv_file
     );
 
+    static std::vector<std::string> GetPairGarbageBox(
+        std::string csv_file,
+        std::string belong_to
+    );
+
+    static std::string GetFirstLeader(
+        std::vector<std::tuple<int, std::string>> group_addrs,
+        int my_lora_addr, 
+        std::string my_ble_addr
+    );
+
     static std::string GetNextGroupLeader(std::vector<std::tuple<std::string, double>> nodes);
 
-    static std::tuple<bool, int> IsMultipleNode(std::vector<std::vector<std::tuple<int, bool>>> g_boxes, int target_node_id);
+    static bool IsMultipleNode(tarako::GarbageBox g_box);
 
     static std::string GetCurrentTimeStamp();
 };

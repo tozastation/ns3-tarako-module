@@ -16,13 +16,14 @@ class TarakoConst
     static const int RANDOM_VALUE_RANGE_END = 6;
     // CSV Option
     static const int ID = 0;
-    static const int LONGITUDE = 1;
-    static const int LATITUDE = 2;
+    static const int LATITUDE = 1;
+    static const int LONGITUDE = 2;
     static const int BURNABLE = 3;
     static const int INCOMBUSTIBLE = 4;
     static const int RESOURCE = 5;
     // Group Option
     static const bool EnableGrouping = true;
+    static const bool EnablePairingGroup = true;
     static const bool EnableEqualization = true;
     static const int SIMURATION_TIME = 24; // Hours
     static const int ACTIVATION_INTERVAL = 10; // Seconds

@@ -51,7 +51,7 @@ double TarakoUtil::ConvertStringToDouble(std::string value)
 
 bool TarakoUtil::IsSupportedGarbageBoxType(std::string value)
 {
-    if (value.empty())
+    if (stoi(value) == 0)
     {
         return false;
     } 
@@ -68,19 +68,59 @@ std::vector<GarbageBox> TarakoUtil::GetGarbageBox(std::string csv_file)
     }
     for (unsigned int row = 1; row < data.size(); row++) {
         std::vector<std::string> rec = data[row];
-        //std::cout << rec[3] << "," << rec[4] << "," << rec[5] << std::endl;
         GarbageBox g_box;
 
-        g_box.id = rec[TarakoConst::ID];
-        g_box.latitude = stod(rec[TarakoConst::LATITUDE]);
-        g_box.longitude = stod(rec[TarakoConst::LONGITUDE]);
-        g_box.burnable = TarakoUtil::IsSupportedGarbageBoxType(rec[TarakoConst::BURNABLE]);
+        g_box.id            = rec[TarakoConst::ID];
+        g_box.latitude      = stod(rec[TarakoConst::LATITUDE]);
+        g_box.longitude     = stod(rec[TarakoConst::LONGITUDE]);
+        g_box.burnable      = TarakoUtil::IsSupportedGarbageBoxType(rec[TarakoConst::BURNABLE]);
         g_box.incombustible = TarakoUtil::IsSupportedGarbageBoxType(rec[TarakoConst::INCOMBUSTIBLE]);
-        g_box.resource = TarakoUtil::IsSupportedGarbageBoxType(rec[TarakoConst::RESOURCE]);
+        g_box.resource      = TarakoUtil::IsSupportedGarbageBoxType(rec[TarakoConst::RESOURCE]);
  
         g_boxes.push_back(g_box);
     }
     return g_boxes;
+}
+
+std::vector<std::string> TarakoUtil::GetPairGarbageBox(std::string csv_file, std::string belong_to)
+{
+    std::vector<std::vector<std::string>> data;
+    std::vector<std::string> result;
+    Csv objCsv(csv_file);
+    if (!objCsv.getCsv(data)) {
+        throw 1;
+    }
+    for (unsigned int row = 1; row < data.size(); row++) {
+        std::vector<std::string> rec = data[row];
+        std::string base = rec[0];
+        if (base == belong_to) {
+            for(auto& v: rec) {
+                if (base != v) {
+                    v.erase(v.size() - 1);
+                    result.push_back(v);
+                }
+            }
+            break;
+        }
+    }
+    if (result.size()!=0) {
+        // std::cout << belong_to << "," << result.at(0) << std::endl;
+        // std::cout << belong_to.length() << "," << result.at(0).length() << std::endl;
+    }
+    return result;
+}
+
+
+std::string TarakoUtil::GetFirstLeader(std::vector<std::tuple<int, std::string>> group_addrs, int my_lora_addr, std::string my_ble_addr) {
+    int         nwk_addr = my_lora_addr;
+    std::string ble_addr = my_ble_addr;
+    for(auto item: group_addrs) {
+        if (nwk_addr>std::get<0>(item)) {
+            nwk_addr = std::get<0>(item);
+            ble_addr = std::get<1>(item);
+        }
+    }
+    return ble_addr;
 }
 
 std::string TarakoUtil::GetNextGroupLeader(std::vector<std::tuple<std::string, double>> nodes)
@@ -99,33 +139,15 @@ std::string TarakoUtil::GetNextGroupLeader(std::vector<std::tuple<std::string, d
     return next_group_leader;
 }
 
-std::tuple<bool, int> TarakoUtil::IsMultipleNode(std::vector<std::vector<std::tuple<int, bool>>> g_boxes, int target_node_id)
+bool TarakoUtil::IsMultipleNode(tarako::GarbageBox g_box)
 {
-    const int SINGLE = 1;
-    bool is_multiple_node = false;
-    int target_index = 0;
-    for (auto& g_box: g_boxes)
-    {
-        for(auto& sensor: g_box)
-        {
-            int node_id = std::get<0>(sensor);
-            if (node_id == target_node_id)
-            {
-                if (g_box.size() <= SINGLE)
-                {
-                    break;
-                }
-                else 
-                {
-                    is_multiple_node = true;
-                    break;
-                }
-            }
-        }
-        if(is_multiple_node) break;
-        target_index++;
-    }
-    return {is_multiple_node, target_index};
+    int count = 0;
+    if (g_box.burnable) count++;
+    if (g_box.incombustible) count++;
+    if (g_box.resource) count++;
+    
+    if (count > 0) return true;
+    else return false;
 }
 
 std::string TarakoUtil::GetCurrentTimeStamp()

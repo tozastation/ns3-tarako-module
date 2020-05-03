@@ -15,7 +15,7 @@
 
 namespace ns3 {
 namespace tarako {
-    enum TarakoNodeStatus {
+    enum TarakoNodeStatus: int {
         group_leader = 1,
         group_member = 2,
         only_lorawan = 3
@@ -26,6 +26,8 @@ namespace tarako {
         public:
         // Basic Info
         int id;
+        std::string belong_to;
+        
         ns3::Vector3D position;
         ns3::Time activate_time;
         ns3::Time conn_interval;
@@ -68,7 +70,7 @@ namespace tarako {
     };
 
     struct TarakoGroupDownlink {
-        std::string next_leader_id;
+        ns3::Mac16Address next_leader_id;
     };
 }
 }

@@ -12,6 +12,7 @@ namespace tarako {
         ss << "id                               : " << this->id << std::endl;
         ss << "lora network addr                : " << this->lora_network_addr << std::endl;
         ss << "ble network addr                 : " << this->ble_network_addr << std::endl;
+        ss << "belong to                        : " << this->belong_to << std::endl;
         ss << "position                         : " << this->position << std::endl;
         ss << "current status                   : " << this->current_status << std::endl;
         ss << "activate time                    : " << this->activate_time.GetSeconds() << "s" << std::endl;

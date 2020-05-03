@@ -82,7 +82,7 @@ namespace tarako {
         lora_packet->RemoveHeader (fHdr);
         
         int nwk_addr = int(fHdr.GetAddress().GetNwkAddr());
-        node_data_map->at(nwk_addr).received_packets_by_lora.push_back(packet->Copy());
+        node_data_map->at(nwk_addr).received_packets_by_lora.push_back(lora_packet);
         // --- Print Payload from Recieved Packet ---
         uint8_t *packet_received_buffer = new uint8_t[lora_packet->GetSize()];
         lora_packet->CopyData(packet_received_buffer, lora_packet->GetSize());
@@ -90,19 +90,17 @@ namespace tarako {
         NS_LOG_INFO("---  OnPacketRecievedAtNetworkServerForGroup ---");
         NS_LOG_INFO("(id)                 : " << node_data_map->at(nwk_addr).id);
         NS_LOG_INFO("(lora net addr)      : " << node_data_map->at(nwk_addr).lora_network_addr);
-        if (node_status == tarako::TarakoNodeStatus::group_member)
-        {
+        if (node_status == tarako::TarakoNodeStatus::group_member) {
             NS_LOG_INFO("(mode)   : " << "grouping");
             tarako::TarakoGroupLeaderPayload gl_payload = {};
             memcpy(&gl_payload, packet_received_buffer, sizeof(gl_payload));
             for (auto& gm: gl_payload.node_infos)
             {
+                auto status = std::get<1>(gm);
                 NS_LOG_INFO("(from)   : " << std::get<0>(gm));
-                NS_LOG_INFO("(status) : " << std::get<1>(gm));
+                NS_LOG_INFO("(status) : " << status);
             }
-        }
-        else
-        {
+        } else {
             NS_LOG_INFO("(mode)   : " << "only lorawan");
             tarako::LoRaWANPayload lorawan_payload = {};
             memcpy(&lorawan_payload, packet_received_buffer, sizeof(lorawan_payload));
@@ -110,7 +108,7 @@ namespace tarako {
         }
         NS_LOG_INFO("------------------------------------------------");
         // --- Free --- //
-        delete []packet_received_buffer;
+        //delete []packet_received_buffer;
     }
 
     void OnActivateNodeForGroup (
@@ -160,24 +158,20 @@ namespace tarako {
                 };
                 
                 Ptr<Packet> new_packet = Create<Packet>((uint8_t *)&gm_payload, sizeof(gm_payload));
-                McpsDataRequestParams params;
-                params.m_dstPanId = 0;
-                params.m_srcAddrMode = SHORT_ADDR;
-                params.m_dstAddrMode = SHORT_ADDR;
-                params.m_dstAddr = Mac16Address (node_data->leader_node_addr.c_str());
-                node_data->lr_wpan_net_device->GetMac()->McpsDataRequest(params, new_packet);
+                auto lr_nwk_addr = Mac16Address (node_data->leader_node_addr.c_str());
+                node_data->lr_wpan_net_device->Send(new_packet, lr_nwk_addr, 0);
                 
                 node_data->sent_packets_by_ble.push_back(new_packet);
                 
                 NS_LOG_INFO("---  OnActivateNodeForGroup::tarako::TarakoNodeStatus::group_member ---");
-                NS_LOG_INFO("(id)                      : " << node_data->id);
-                NS_LOG_INFO("(lora net addr)           : " << node_data->lora_network_addr);
-                NS_LOG_INFO("(ble net addr)            : " << node_data->ble_network_addr);
-                NS_LOG_INFO("(leader net addr)         : " << node_data->leader_node_addr);
-                NS_LOG_INFO("(garbage box status)      : " << gm_payload.status);
-                NS_LOG_INFO("(lora energy consumption) : " << gm_payload.lora_energy_consumption);
-                NS_LOG_INFO("(ble count)               : " << gm_payload.cnt_ble);
-                NS_LOG_INFO("(number of sent)          : " << node_data->sent_packets_by_lora.size());
+                NS_LOG_INFO("(id)                         : " << node_data->id);
+                NS_LOG_INFO("(lora net addr)              : " << node_data->lora_network_addr);
+                NS_LOG_INFO("(ble net addr)               : " << node_data->ble_network_addr);
+                NS_LOG_INFO("(leader net addr)            : " << node_data->leader_node_addr);
+                NS_LOG_INFO("(garbage box status)         : " << gm_payload.status);
+                NS_LOG_INFO("(rx lora energy consumption) : " << gm_payload.lora_energy_consumption);
+                NS_LOG_INFO("(rx ble count)               : " << gm_payload.cnt_ble);
+                NS_LOG_INFO("(number of sent)             : " << node_data->sent_packets_by_lora.size());
                 NS_LOG_INFO("-----------------------------------------------------------------------");
                 Simulator::Schedule(node_data->conn_interval, &OnActivateNodeForGroup, node_data);
                 break;
@@ -190,7 +184,7 @@ namespace tarako {
         }
     }
 
-    void DataIndication (tarako::TarakoNodeData* node_data , McpsDataIndicationParams params, Ptr<Packet> packet)
+    void DataIndication (tarako::TarakoNodeData* node_data, McpsDataIndicationParams params, Ptr<Packet> packet)
     {
         std::ostringstream ble_src_addr;
         ble_src_addr << params.m_srcAddr;
@@ -218,7 +212,7 @@ namespace tarako {
                     
                     total_energy_consumption = gm_payload.lora_energy_consumption + (gm_payload.cnt_ble * 0.003);
                     node_energy_consumptions.push_back({sent_from, total_energy_consumption});
-                    delete []data_sent_buffer;
+                    // delete []data_sent_buffer;
                 }
                 // My Info
                 total_energy_consumption = node_data->lora_energy_consumption + (node_data->sent_packets_by_ble.size() * 0.003);
@@ -237,8 +231,9 @@ namespace tarako {
                 NS_LOG_INFO("(group num)         : " << node_data->group_node_addrs.size() + 1);
                 NS_LOG_INFO("-------------------------------------------------");
                 // Judge Next Leader
-                std::string next_leader_id = tarako::TarakoUtil::GetNextGroupLeader(node_energy_consumptions);
-                if (!next_leader_id.empty() && next_leader_id != node_data->leader_node_addr) 
+                std::string next_leader_id_str = tarako::TarakoUtil::GetNextGroupLeader(node_energy_consumptions);
+                ns3::Mac16Address next_leader_id = ns3::Mac16Address(next_leader_id_str.c_str());
+                if (!next_leader_id_str.empty() && next_leader_id_str != node_data->leader_node_addr) 
                 { 
                     for (auto node: node_data->group_node_addrs)
                     {
@@ -249,18 +244,22 @@ namespace tarako {
                         params.m_srcAddrMode = SHORT_ADDR;
                         params.m_dstAddrMode = SHORT_ADDR;
                         params.m_dstAddr     = Mac16Address (std::get<1>(node).c_str());
-                        node_data->lr_wpan_net_device->GetMac()->McpsDataRequest(params, new_packet);
+                        // node_data->lr_wpan_net_device->GetMac()->McpsDataRequest(params, new_packet);
+                        auto result = node_data->lr_wpan_net_device->Send(new_packet, Mac16Address (std::get<1>(node).c_str()), 0);
                         NS_LOG_INFO("----  DataIndication.JudgeNextLeader()  ----");
                         NS_LOG_INFO("(id)                : " << node_data->id);
                         NS_LOG_INFO("(lora net addr)     : " << node_data->lora_network_addr);
                         NS_LOG_INFO("(ble net addr)      : " << node_data->ble_network_addr);
                         NS_LOG_INFO("(next leader)       : " << next_leader_id);
                         NS_LOG_INFO("(notify to)         : " << std::get<1>(node));
+                        NS_LOG_INFO("(result)            : " << result);
                         NS_LOG_INFO("--------------------------------------------");
                     }
                     // Update My Node Status -> Leader to Member
                     node_data->current_status   = tarako::TarakoNodeStatus::group_member;
-                    node_data->leader_node_addr = next_leader_id;
+                    std::ostringstream oss;
+                    oss << next_leader_id;
+                    node_data->leader_node_addr = oss.str();
                     Simulator::Schedule(node_data->conn_interval, &OnActivateNodeForGroup, node_data);
                 }
             }
@@ -280,31 +279,34 @@ namespace tarako {
                 NS_LOG_INFO("(payload.status)    : " << gm_payload.status);
                 NS_LOG_INFO("(from)              : " << ble_src_addr.str());
                 NS_LOG_INFO("-------------------------------------------------");
-                delete []from_group_member_buffer;
+                // delete []from_group_member_buffer;
             }
         }
         else if(node_status == tarako::TarakoNodeStatus::group_member)
         {
+            std::ostringstream oss_for_group_member;
+            
             node_data->received_packets_by_ble.push_back(packet->Copy());
             tarako::TarakoGroupDownlink down_link = {};
 
-            packet->Print(std::cout);
             Ptr<Packet> received_packet       = packet->Copy ();
             uint8_t *from_gl = new uint8_t[received_packet->GetSize()];
             received_packet->CopyData(from_gl, received_packet->GetSize());
             memcpy(&down_link, from_gl, sizeof(down_link));
             
-            if (!down_link.next_leader_id.empty())
+            oss_for_group_member << down_link.next_leader_id;
+            if (!oss_for_group_member.str().empty())
             {
-                if (node_data->ble_network_addr == down_link.next_leader_id)
+                // its me
+                if (node_data->ble_network_addr == oss_for_group_member.str())
                 {
-                    node_data->current_status = tarako::TarakoNodeStatus::group_leader;
+                    node_data->current_status   = tarako::TarakoNodeStatus::group_leader;
                     node_data->leader_node_addr = node_data->ble_network_addr;
                     NS_LOG_INFO("[UPDATE] Topology");
                 }
-                else if(down_link.next_leader_id.length() == 5)
+                else if(node_data->ble_network_addr != oss_for_group_member.str())
                 {
-                    node_data->leader_node_addr = down_link.next_leader_id;
+                    node_data->leader_node_addr = oss_for_group_member.str();
                     NS_LOG_INFO("[UPDATE] Topology");
                 }
                 else
@@ -322,7 +324,7 @@ namespace tarako {
             NS_LOG_INFO("(tx time)           : " << node_data->sent_packets_by_ble.size());
             NS_LOG_INFO("(rx time)           : " << node_data->received_packets_by_ble.size());
             NS_LOG_INFO("--------------------------------------------");
-            delete []from_gl;
+            // delete []from_gl;
         }
     }
     
